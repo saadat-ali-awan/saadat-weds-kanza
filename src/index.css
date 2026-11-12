@@ -15,14 +15,16 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--wine);
-  overflow: hidden;
+  /* never sideways; vertical scroll stays available as a fallback on odd screens */
+  overflow-x: hidden;
 }
 
 .page {
+  --pad: 48px;
   position: relative;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: calc(var(--pad) / 2) 0;
   display: grid;
   place-items: center;
   background:
@@ -33,7 +35,12 @@ body {
 }
 
 /* ---------- panel ---------- */
+/* Size: the largest 430:932 box that fits the *visible* screen (dvh follows the phone's address bar). */
 .frame {
+  width: min(calc(100vw - var(--pad)), calc((100vh - var(--pad)) * 430 / 932));
+  width: min(calc(100vw - var(--pad)), calc((100dvh - var(--pad)) * 430 / 932));
+  aspect-ratio: 430 / 932;
+  overflow: hidden;
   position: relative;
   z-index: 2;
   border-radius: 46px;
@@ -47,6 +54,9 @@ body {
 }
 .frame > div > .phone {
   border-radius: 46px;
+}
+.on-phone {
+  --pad: 24px;
 }
 .on-phone .frame,
 .on-phone .frame > div > .phone {
