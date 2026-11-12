@@ -1,0 +1,13 @@
+{
+  "name": "Saadat & Kanza · Shaadi Mubarak",
+  "short_name": "Saadat & Kanza",
+  "description": "Video invitation: Sunday, 29 November 2026 · Dehleez Marquee, H-13, Islamabad",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2a0812",
+  "theme_color": "#2a0812",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
