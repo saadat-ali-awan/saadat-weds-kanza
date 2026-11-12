@@ -38,14 +38,52 @@ const og = `<!doctype html><html><head>${fonts}<style>
   </div>
 </div></body></html>`
 
-const icon = (size) => `<!doctype html><html><head>${fonts}<style>
-  body { margin: 0; }
-  .i { width: ${size}px; height: ${size}px; display: grid; place-items: center; background: #2a0812; }
-  .s { width: 88%; height: 88%; border-radius: 50%; display: grid; place-items: center;
-       background: radial-gradient(circle at 35% 30%, #d2455f, #8d1430 60%, #5c0a1d);
-       box-shadow: 0 0 0 ${Math.max(1, size * 0.03)}px #f3d98b inset; }
-  .s span { font-family: 'Gulzar', serif; font-size: ${size * 0.5}px; line-height: 1; color: #f7dc93; transform: translate(-6%, 6%); }
-</style></head><body><div class="i"><div class="s"><span>ش</span></div></div></body></html>`
+// App icon: a rolled parchment letter tied with a thin red silk bow, on a wine tile.
+// rounded=true gives transparent rounded corners (browser tab, Android); false is a full square (iOS rounds it itself).
+const ink = 'stroke="#4a210f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'
+// a silk ribbon line: dark outline under a red core
+const silkLine = (d, extra = '') => `
+  <path d="${d}" fill="none" stroke="#4a210f" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round" ${extra}/>
+  <path d="${d}" fill="none" stroke="#d62a48" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`
+const scrollSvg = `
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7a1530"/><stop offset="1" stop-color="#3a0716"/>
+    </linearGradient>
+    <linearGradient id="roll" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6e0"/><stop offset=".55" stop-color="#f1dcae"/><stop offset="1" stop-color="#c9a46a"/>
+    </linearGradient>
+    <linearGradient id="rib" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ef4560"/><stop offset=".5" stop-color="#c81e3c"/><stop offset="1" stop-color="#8e0f2a"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(50 50) scale(1.08) translate(-50 -56) rotate(-22 50 56)">
+    <!-- the rolled letter, curled at both ends -->
+    <rect x="14" y="44" width="72" height="20" rx="3" fill="url(#roll)" ${ink}/>
+    <path d="M20 47.5 H80 M20 60.5 H80" stroke="#b8935c" stroke-width="1" opacity=".45"/>
+    <ellipse cx="14" cy="54" rx="5" ry="10" fill="#f6e4bd" ${ink}/>
+    <path d="M14 50 q3 2 0 7 q-2.4 -2 0 -4.5" fill="none" stroke="#4a210f" stroke-width="1.5"/>
+    <ellipse cx="86" cy="54" rx="5" ry="10" fill="#f6e4bd" ${ink}/>
+    <path d="M86 50 q3 2 0 7 q-2.4 -2 0 -4.5" fill="none" stroke="#4a210f" stroke-width="1.5"/>
+    <!-- silk ribbon wrapped round the middle -->
+    <rect x="47.5" y="42.5" width="5" height="23" rx="1.2" fill="url(#rib)" ${ink}/>
+    <!-- long curling tails -->
+    ${silkLine('M50 54 C46 62 42 66 38 72 C35 76 37 80 33 85')}
+    ${silkLine('M50 54 C55 61 59 64 62 70 C65 75 63 79 67 83')}
+    <!-- the two loops of the bow -->
+    ${silkLine('M50 53 C44 44 34 41 33 47 C32 53 42 55 50 53 Z')}
+    ${silkLine('M50 53 C56 44 66 41 67 47 C68 53 58 55 50 53 Z')}
+    <circle cx="50" cy="53.5" r="3.6" fill="#c41e3a" ${ink}/>
+  </g>`
+const icon = (size, rounded) => `<!doctype html><html><head><style>
+  html, body { margin: 0; background: transparent; }
+  svg { display: block; }
+</style></head><body>
+<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="100" height="100" rx="${rounded ? 22 : 0}" fill="url(#tile)"/>
+  <rect x="4.5" y="4.5" width="91" height="91" rx="${rounded ? 18 : 6}" fill="none" stroke="#e9c46a" stroke-opacity=".55" stroke-width="1.6"/>
+  ${scrollSvg}
+</svg></body></html>`
 
 const b = await chromium.launch()
 const p = await b.newPage({ deviceScaleFactor: 1 })
@@ -53,11 +91,11 @@ async function shot(html, w, h, path, type) {
   await p.setViewportSize({ width: w, height: h })
   await p.setContent(html, { waitUntil: 'networkidle' })
   await p.evaluate(() => document.fonts.ready)
-  await p.screenshot({ path, type, quality: type === 'jpeg' ? 86 : undefined, clip: { x: 0, y: 0, width: w, height: h } })
+  await p.screenshot({ path, type, quality: type === 'jpeg' ? 86 : undefined, omitBackground: type === 'png', clip: { x: 0, y: 0, width: w, height: h } })
 }
 await shot(og, 1200, 630, 'public/og-image.jpg', 'jpeg')
-for (const [s, name] of [[32, 'favicon-32.png'], [180, 'apple-touch-icon.png'], [192, 'icon-192.png'], [512, 'icon-512.png']]) {
-  await shot(icon(s), s, s, `public/${name}`, 'png')
+for (const [s, name, rounded] of [[32, 'favicon-32.png', true], [180, 'apple-touch-icon.png', false], [192, 'icon-192.png', true], [512, 'icon-512.png', true]]) {
+  await shot(icon(s, rounded), s, s, `public/${name}`, 'png')
 }
 await b.close()
 console.log('done')
