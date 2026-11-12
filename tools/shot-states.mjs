@@ -1,0 +1,20 @@
+// Screenshot the phone panel while playing and after the end: node tools/shot-states.mjs <outPrefix>
+import { chromium } from 'playwright'
+
+const [out] = process.argv.slice(2)
+const b = await chromium.launch()
+const p = await b.newPage({ viewport: { width: 520, height: 1000 }, deviceScaleFactor: 1 })
+await p.goto('http://localhost:5173/')
+await p.waitForFunction(() => !document.querySelector('.tap')?.disabled)
+await p.click('.tap')
+await p.evaluate(() => { document.querySelector('audio').muted = true })
+await p.waitForTimeout(2500)
+await p.locator('.phone').screenshot({ path: `${out}_playing.png` })
+const progress = await p.evaluate(() => document.querySelector('.progress > div').style.width)
+// let it play to the end (headless Chrome may not play audio, so seeking is not reliable)
+await p.waitForSelector('.replay', { timeout: 60000 })
+await p.waitForTimeout(800)
+await p.locator('.phone').screenshot({ path: `${out}_ended.png` })
+const labels = await p.evaluate(() => [...document.querySelectorAll('[aria-label]')].map((e) => e.getAttribute('aria-label')))
+console.log('progress while playing', progress, 'controls after end', labels)
+await b.close()
